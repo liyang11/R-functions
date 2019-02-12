@@ -1,4 +1,4 @@
-
+###combine data frames with unequal column number
 rbind.all.columns <- function(x, y) {
   x.diff <- setdiff(colnames(x), colnames(y))
   y.diff <- setdiff(colnames(y), colnames(x))
@@ -7,3 +7,7 @@ rbind.all.columns <- function(x, y) {
   return(rbind(x, y))
 }
 
+
+
+###summary by group
+tapply(df$dt, df$group, summary)
