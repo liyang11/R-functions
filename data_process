@@ -10,4 +10,28 @@ rbind.all.columns <- function(x, y) {
 
 
 ###summary by group
-tapply(df$dt, df$group, summary)
+tapply(d_c$y_t, d_c$Crop, summary)
+ddply(check0, .(Crop,x_DALA), summarise, mean=mean(y_t),min=min(y_t), max=max(y_t),sd=sd(y_t),n=length(y_t))
+
+# calculate AIC or AICc based on model m
+myAIC <- function(m, type='AIC'){
+  k <- (1+length(coef(m)))
+  n <- nrow(m$origData)
+  # # AIC
+  if(type=='AIC') return( -2*as.numeric(logLik(m)) + 2*k )   #return(AIC(m))
+  # AICc
+  if(type=='AICc') return( -2*as.numeric(logLik(m)) + 2*k * (n/(n-k-1)) )
+}
+
+
+# calculate AIC or AICc based on residuels and estimated parameters
+myAIC <- function(resid, paras,type='AIC'){
+logL <- 0.5 * (- length(resid) * (log(2 * pi) + 1 - log(length(resid)) + log(sum(resid^2))))
+k <- (1+length(paras))
+n <- length(resid)
+if(type=='AIC') return( -2*logL + 2*k )   #return(AIC(m))
+# AICc
+if(type=='AICc') return( -2*logL + 2*k * (n/(n-k-1)) )
+}
+res <- y-pred
+myAIC(resid,fit$par,type='AIC')
