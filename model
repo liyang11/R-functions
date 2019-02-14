@@ -1,0 +1,32 @@
+#non-linear regression model
+DALA <- c(0,1,3,7,10)
+y <- c(19.61,11.08,12.63,12.30,3.86)
+newd <- data.frame(y,C=rep(27.46419,5),D=c(0,1,3,7,10))
+m1 <- nls(y~C*NSD*exp(-k*D), newd, start=list(NSD=0.2,k=0.31))
+plot(y ~ DALA)
+lines(DALA, fitted(m), lty = 2, col = "red", lwd = 2)
+
+
+m2 <- nls(y~C*NSD*(g*exp(-k1*D)+(1-g)*exp(-(k1+kdif)*D)), newd, start=list(k1=0.02,kdif=0.9,g=0.7,NSD=0.7), 
+algorithm="port", lower=c(0,0.0001,0,0), upper=c(100,100,1,1))
+#for m2, use least-squares optimization instead
+obj <- function(Mpara) {
+  k1 <- Mpara[1]
+  kdif <- Mpara[2]
+  g <- Mpara[3]
+  NSD <- Mpara[4]
+  pred<-newd$C*NSD*(g*exp(-k1*newd$D)+(1-g)*exp(-(k1+kdif)*newd$D))
+  return(sum((y - pred) ^ 2))
+}
+x1 <- c(0.0774, 0.9829, 0.8216, 0.429)
+fit <- neldermead(x1,
+                  obj,
+                  lower = c(0, 0, 0, 0),
+                  upper = c(100, 100, 1, 1))
+pred_k1 <- fit$par[1]
+pred_kdif <- fit$par[2]
+pred_g <- fit$par[3]
+pred_NSD <- fit$par[4]
+yhat<-newd$C*pred_NSD*(pred_g*exp(-pred_k1*newd$D)+(1-pred_g)*exp(-(pred_k1+pred_kdif)*newd$D))
+# plot(y ~ DALA)
+lines(DALA, yhat, lty = 2, col = "blue", lwd = 2)
