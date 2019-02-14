@@ -1,5 +1,4 @@
 ##calculate daily BMR
-rm(list=c())
 BMR <- function(a=30,w=50,l=164,type='f'){ # age, weight_kg, height_cm, sex: f or m
   if(type=='f') y=10*w+6.25*l-5*a-161
   if(type=='m') y=10*w+6.25*l-5*a-5
