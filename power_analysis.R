@@ -125,15 +125,14 @@ pwr.r.test(r = 0.1, sig.level = 0.01, power = 0.8)
 
 
 
-
-
+####one sample 1 test
 
 LI<- 0.2
 csd<- LI/4
-del<- 0.05
+del<- 0.1-0.2
 
 pwr.t.test(d=del/csd,
            sig.level=0.05,
            power=0.9,
-           alternative ='greater',
+           alternative ='less',
            type= 'one.sample')
