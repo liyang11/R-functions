@@ -1,0 +1,96 @@
+###generate equation in ggplot2
+equation = function(x,n) {
+  lm_coef <- list(a = round(coef(x)[1], digits = 2),
+                  b = round(coef(x)[2], digits = 2),
+                  r2 = round(summary(x)$r.squared, digits = 2),
+                  n = n);
+  lm_eq <- substitute(log(italic(y)) == a + b %.% log(italic(x))*","~~italic(R)^2~"="~r2*","~italic(N)~"="~n,lm_coef)
+  as.character(as.expression(lm_eq));                 
+}
+
+##generate prediction interval equation with alpha 0.999 in ggplot2
+piFun = function(d,x0,alpha=0.999) {
+  lm1.log <- lm(log(d[,2])~log(d[,1]))
+  summary(lm1.log)
+  b1<- coef(lm1.log)[[1]]
+  b2<- coef(lm1.log)[[2]]
+  y0 <- exp(b1+b2*log(x0))  ##predicted y value
+  
+  #more complicated equations
+  N <- nobs(lm1.log)
+  df <- lm1.log$df.residual #N-2
+  # correct t-value
+  tval <- qt((1-alpha)/2, df=df)
+  x<-d[,1]
+  y<-d[,2]
+  Sxx <- sum((log(x) - mean(log(x)))^2)
+  MSres <- sum(lm1.log$residuals^2)/df
+  SE_predict <- sqrt(MSres * ( 1+ 1/N + (log(x0) - mean(log(x)))^2/Sxx))
+  pi<- exp(b1+b2*log(x0) + tval * c(1, -1)*SE_predict)
+  
+  lm_coef <- list(a1 = round(b1, digits = 2),
+                  a2 = round(b2, digits = 2),
+                  a3 = round(tval*sqrt(MSres), digits = 2),
+                  a5 =  round(1+ 1/N, digits = 2),
+                  a6 = round(mean(log(x)),digits = 2),
+                  a7 = round(Sxx,digits = 2))
+  
+  lm_eq <- substitute(log(italic(PI)) == a1 + a2 %.% log(italic(X)) %+-% (a3 %.% (a5+(log(italic(X))-a6)^{2}%/% a7)),lm_coef)
+  #as.character(as.expression(lm_eq)); 
+  return(as.character(as.expression(lm_eq)))
+  #return(c(y0 ,pi))
+}  
+
+
+
+
+#############################################################
+#############ggplot scatterplot with fitted line and prediction interval 
+####how to add equation in ggplot
+####rescale x/y axis with log10
+###'90day_Chronic'
+
+fty<- '.pdf'
+d <- dat1[,c("min_shortterm","min_chronic")]
+d <- na.omit(d)
+tst<- '90day_Chronic'
+N <- nrow(d)
+
+##add caption
+cap <- paste0('Source: Based on lower NOAEL between Rat and Mouse')
+
+
+lm1.log <- lm(log(min_chronic) ~ log(min_shortterm), data = d)
+summary(lm1.log)
+alpha <- 0.001
+#df.new<- data.frame(speed=(0.05:1500))
+###confidence interval
+conf.dist <- exp(predict(lm1.log, interval="confidence", level=1-alpha) ) #newdata = df.new,
+###prediction interval
+pred.dist <- exp(predict(lm1.log, interval="prediction", level=1-alpha) )# newdata = df.new,
+df.new <- d
+df.new[c("fit","lwr.conf", "upr.conf")] <- conf.dist
+df.new[c("lwr.pred", "upr.pred")] <- pred.dist[,2:3]
+
+f1<- ggplot(df.new) + geom_point(aes(x=min_shortterm, y=min_chronic), size=4, colour="#993399") + 
+  geom_ribbon(data=df.new, aes(x=min_shortterm, ymin=lwr.pred, ymax=upr.pred), alpha=0.1, inherit.aes=F, fill="blue") + 
+  #geom_ribbon(data=df.new, aes(x=min_shortterm, ymin=lwr.conf, ymax=upr.conf), alpha=0.2, inherit.aes=F, fill="#339900") +  
+  geom_line(data=df.new, aes(x=min_shortterm, y=fit), colour="#339900", size=3) +
+  labs(x="90-day NOAEL", y="Chronic NOAEL",caption=cap)+ 
+  theme_bw() + theme(panel.grid.minor = element_blank(),
+                     plot.caption=element_text(size=16),
+                     axis.text=element_text(size=16),
+                     axis.title=element_text(size=18,face="bold"),
+                     plot.margin=grid::unit(c(2,2,2,2), "mm"))+
+  scale_x_log10(breaks = c(0.000001, 10^(-3:10)), 
+                labels = c(0, math_format()(-3:10))) +
+  scale_y_log10(breaks = c(0.000001, 10^(-3:10)), 
+                labels = c(0, math_format()(-3:10)))+ 
+  annotate("rect", xmin = 10^1, xmax = 10^3, ymin = 10^-3, ymax = 10^-2, fill="white", colour="red") +
+  annotate("text", x = 10^2, y = 7^-3, label = equation(lm1.log,N), parse = TRUE, size =5)+
+  annotate("text", x = 2.5, y = 10^4, label = piFun(d,1), parse = TRUE, size = 5)
+
+ggsave(paste0(tst,fty), plot = f1,  width=11.48, height=6.31, units = "in")
+
+
+
