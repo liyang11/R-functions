@@ -1,3 +1,5 @@
+############################ 1. scatterplot with log10 rescale x/y axis, equations, prediction interval ##############
+
 ###generate equation in ggplot2
 equation = function(x,n) {
   lm_coef <- list(a = round(coef(x)[1], digits = 2),
@@ -81,13 +83,13 @@ f1<- ggplot(df.new) + geom_point(aes(x=min_shortterm, y=min_chronic), size=4, co
                      plot.caption=element_text(size=16),
                      axis.text=element_text(size=16),
                      axis.title=element_text(size=18,face="bold"),
-                     plot.margin=grid::unit(c(2,2,2,2), "mm"))+
+                     plot.margin=grid::unit(c(2,2,2,2), "mm"))+  ###self-defined margin, caption and axis size
   scale_x_log10(breaks = c(0.000001, 10^(-3:10)), 
                 labels = c(0, math_format()(-3:10))) +
   scale_y_log10(breaks = c(0.000001, 10^(-3:10)), 
                 labels = c(0, math_format()(-3:10)))+ 
-  annotate("rect", xmin = 10^1, xmax = 10^3, ymin = 10^-3, ymax = 10^-2, fill="white", colour="red") +
-  annotate("text", x = 10^2, y = 7^-3, label = equation(lm1.log,N), parse = TRUE, size =5)+
+  annotate("rect", xmin = 10^1, xmax = 10^3, ymin = 10^-3, ymax = 10^-2, fill="white", colour="red") + ###add rectangle
+  annotate("text", x = 10^2, y = 7^-3, label = equation(lm1.log,N), parse = TRUE, size =5)+ ###add equations
   annotate("text", x = 2.5, y = 10^4, label = piFun(d,1), parse = TRUE, size = 5)
 
 ggsave(paste0(tst,fty), plot = f1,  width=11.48, height=6.31, units = "in")
